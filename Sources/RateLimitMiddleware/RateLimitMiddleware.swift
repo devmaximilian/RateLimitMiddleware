@@ -59,7 +59,7 @@ public struct RateLimitMiddleware: Middleware {
         guard peer.remaining > 0 else {
             return request.eventLoop.makeFailedFuture(
                 Abort(.tooManyRequests, headers: [
-                    "Rate-Limit-Limit": limit.description,
+                    "Rate-Limit-Limit": self.limit.description,
                     "Rate-Limit-Remaining": peer.remaining.description,
                     "Rate-Limit-Reset": peer.reset.description
                 ])
@@ -68,7 +68,7 @@ public struct RateLimitMiddleware: Middleware {
         peer.remaining -= 1
         
         return next.respond(to: request).map { response in
-            response.headers.replaceOrAdd(name: "Rate-Limit-Limit", value: limit.description)
+            response.headers.replaceOrAdd(name: "Rate-Limit-Limit", value: self.limit.description)
             response.headers.replaceOrAdd(name: "Rate-Limit-Remaining", value: peer.remaining.description)
             response.headers.replaceOrAdd(name: "Rate-Limit-Reset", value: peer.reset.description)
             return response
