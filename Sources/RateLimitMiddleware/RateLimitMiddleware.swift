@@ -1,12 +1,18 @@
 import Foundation
 import Vapor
 
+/// A simple rate limit middleware
 public struct RateLimitMiddleware: Middleware {
     private let cache: MemoryCache<Peer>
     private let limit: UInt64
     private let interval: Double
     private let autoPurge: AutoPurge
     
+    /// Creates a new instance of `RateLimitMiddleware`
+    /// - Parameters:
+    ///   - limit: Number of requests a client is allowed to perform within the `refreshInterval`.
+    ///   - refreshInterval: Time interval until `limit` is reset for a client.
+    ///   - autoPurge: Enable auto purging cache.
     public init(limit: UInt64 = 60,
                 refreshInterval: TimeInterval,
                 autoPurge: Bool = false) {
@@ -16,6 +22,11 @@ public struct RateLimitMiddleware: Middleware {
         self.autoPurge = AutoPurge(enabled: autoPurge)
     }
     
+    /// Called with each `Request` that passes through this middleware.
+    /// - parameters:
+    ///     - request: The incoming `Request`.
+    ///     - next: Next `Responder` in the chain, potentially another middleware or the main router.
+    /// - returns: An asynchronous `Response`.
     public func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
         let id = (request.remoteAddress?.description ?? "") + request.url.description
         
@@ -65,6 +76,8 @@ public struct RateLimitMiddleware: Middleware {
     }
 }
 
+// MARK: MemoryCache
+
 extension RateLimitMiddleware {
     fileprivate final class MemoryCache<Value> {
         private var store: [String: Value]
@@ -82,7 +95,11 @@ extension RateLimitMiddleware {
             set { self.store[key] = newValue }
         }
     }
+}
 
+// MARK: AutoPurge
+
+extension RateLimitMiddleware {
     fileprivate final class AutoPurge {
         fileprivate let enabled: Bool
         fileprivate var lastRun: Date = .init()
@@ -101,40 +118,5 @@ extension RateLimitMiddleware {
         fileprivate func updateLastRun() {
             self.lastRun = .init()
         }
-    }
-
-    internal struct Peer {
-        internal let createdAt: Date
-        internal let expiresAt: Date
-        internal var remaining: UInt64
-        
-        internal var expired: Bool {
-            return Date() > expiresAt
-        }
-        
-        internal var reset: Int {
-            return Int(expiresAt.timeIntervalSince1970 - Date().timeIntervalSince1970)
-        }
-        
-        internal init(limit: UInt64, refreshInterval: TimeInterval) {
-            self.createdAt = .init()
-            self.expiresAt = .init(timeIntervalSinceNow: refreshInterval)
-            self.remaining = limit
-        }
-    }
-}
-
-extension TimeInterval {
-    public static func seconds(_ value: UInt64) -> TimeInterval {
-        return TimeInterval(value)
-    }
-    public static func minutes(_ value: UInt64) -> TimeInterval {
-        return seconds(value * 60)
-    }
-    public static func hours(_ value: UInt64) -> TimeInterval {
-        return minutes(value * 60)
-    }
-    public static func days(_ value: UInt64) -> TimeInterval {
-        return hours(value * 24)
     }
 }
