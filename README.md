@@ -28,7 +28,7 @@ let package = Package(
 
 ### Usage
 
-```
+```swift
 /// Limits requests to 60 requests per 30 minutes 
 let rateLimitMiddleware = RateLimitMiddleware(
     limit: 60,
@@ -74,7 +74,7 @@ app.routes.group(rateLimitMiddleware) { builder in
 
 To prevent stale cache from remaining in memory forever, there's an option to enable auto purge.
 
-```
+```swift
 /// Limits requests to 60 requests per 30 minutes 
 let rateLimitMiddleware = RateLimitMiddleware(
     limit: 60,
