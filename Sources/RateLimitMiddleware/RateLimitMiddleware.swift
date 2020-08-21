@@ -77,7 +77,7 @@ extension RateLimitMiddleware {
             return store.map { $0 }
         }
         
-        subscript(key key: String) -> Value? {
+        fileprivate subscript(key key: String) -> Value? {
             get { return self.store[key] }
             set { self.store[key] = newValue }
         }
@@ -104,9 +104,9 @@ extension RateLimitMiddleware {
     }
 
     internal struct Peer {
-        let createdAt: Date
-        let expiresAt: Date
-        var remaining: UInt64
+        internal let createdAt: Date
+        internal let expiresAt: Date
+        internal var remaining: UInt64
         
         internal var expired: Bool {
             return Date() > expiresAt
